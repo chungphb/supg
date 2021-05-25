@@ -4,7 +4,8 @@
 
 #pragma once
 
-#include <supg/util/payload.h>
+#include <supg/core/rxpk.h>
+#include <supg/core/payload.h>
 #include <supg/util/data_types.h>
 #include <vector>
 #include <sys/socket.h>
@@ -18,8 +19,7 @@ char get_random_byte();
 struct gateway {
 public:
     gateway(std::vector<byte> mac);
-    void push_data(int& sock_fd, sockaddr_in& server_addr, size_t payload_id) const;
-    friend std::ostream& operator<<(std::ostream& os, const gateway& gw);
+    void push_data(int sock_fd, const sockaddr_in& server_addr, rxpk&& rxpk) const;
 
 private:
     std::vector<byte> _mac;
