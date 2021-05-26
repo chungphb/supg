@@ -19,7 +19,7 @@ byte_array rxpk::as_byte_array() const {
     return ss.str();
 }
 
-void rxpk::add(std::string field_name, std::string field_value) {
+void rxpk::add(std::string field_name, const std::string& field_value) {
     std::stringstream ss;
     ss << R"(")" << field_value << R"(")";
     _fields.emplace_back(std::move(field_name), ss.str());
@@ -29,15 +29,6 @@ void rxpk::add(std::string field_name, const char* field_value) {
     std::stringstream ss;
     ss << R"(")" << field_value << R"(")";
     _fields.emplace_back(std::move(field_name), ss.str());
-}
-
-void rxpk::update_payload(payload&& payload) {
-    add("data", payload.as_byte_array());
-    _payload = std::move(payload);
-}
-
-const payload& rxpk::get_payload() const {
-    return _payload;
 }
 
 rxpk rxpk::clone() {

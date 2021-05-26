@@ -1,0 +1,6 @@
+[submodule "modules/tinytoml"]
+	path = modules/tinytoml
+	url = https://github.com/mayah/tinytoml
+[submodule "modules/date"]
+	path = modules/date
+	url = https://github.com/HowardHinnant/date

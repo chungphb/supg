@@ -1,0 +1,21 @@
+[general]
+log_level = 4
+
+[network_server]
+host = "localhost"
+port = 1700
+
+[simulator]
+network_session_key = "00000000000000000000000000000000"
+application_session_key = "00000000000000000000000000000000"
+
+[simulator.device]
+count = 1000
+f_port = 10
+payload = "test_packet_1234"
+frequency = 868100000
+spreading_factor = 12
+
+[simulator.gateway]
+min_count = 3
+max_count = 5

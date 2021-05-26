@@ -7,6 +7,8 @@
 int main() {
     using namespace supg;
     simulator sim;
-    sim.run();
+    sim.init();
+    sim.start();
+    sim.stop();
     return 0;
 }

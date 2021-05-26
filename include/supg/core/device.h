@@ -10,13 +10,16 @@ namespace supg {
 
 struct device {
 public:
-    device(std::vector<byte> addr);
-    void send_payload(const gateway& gateway, int socket_fd, const sockaddr_in& server_addr, rxpk&& rxpk);
-    payload generate_payload(message_type m_type, byte_array&& data);
+    device(std::vector<byte> addr, const config& config);
+    void send_payload(const gateway& gateway, int socket_fd, const sockaddr_in& server_addr);
+
+private:
+    payload generate_payload(message_type m_type);
 
 private:
     std::vector<byte> _addr;
-    uint16_t _frame_cnt = 0;
+    int _frame_cnt = 0;
+    const config& _config;
 };
 
 }

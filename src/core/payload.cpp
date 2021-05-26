@@ -7,7 +7,7 @@
 namespace supg {
 
 byte_array payload::as_byte_array() const {
-    return "VEVTVF9QQUNLRVRfMTIzNA==";
+    return _data;
 }
 
 }

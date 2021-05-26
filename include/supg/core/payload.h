@@ -20,7 +20,8 @@ public:
     friend gateway;
 
 private:
-    uint16_t _f_cnt;
+    int _f_port;
+    int _f_cnt;
     std::vector<byte> _dev_addr;
     message_type _m_type;
     byte_array _data;

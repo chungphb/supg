@@ -13,10 +13,6 @@ namespace supg {
 using byte = char;
 using byte_array = std::basic_string<byte>;
 
-constexpr uint16_t DEFAULT_PORT = 1700;
-constexpr size_t GATEWAY_MAC_LEN = 8;
-constexpr size_t BUFFER_SIZE = 1024;
-
 enum struct message_type {
     join_request,
     join_accept,
@@ -26,6 +22,15 @@ enum struct message_type {
     confirmed_data_down,
     rejoin_request,
     proprietary
+};
+
+enum struct log_level {
+    panic = 0,
+    fatal = 1,
+    error = 2,
+    warning = 3,
+    info = 4,
+    debug = 5
 };
 
 struct network_server {
