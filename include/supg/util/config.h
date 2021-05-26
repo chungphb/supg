@@ -16,7 +16,6 @@ constexpr char NS_DEFAULT_HOST[] = "localhost";
 constexpr size_t NS_DEFAULT_PORT = 1700;
 
 struct config {
-    log_level _log_level;
     std::string _network_session_key;
     std::string _application_session_key;
     int _dev_count = 1000;

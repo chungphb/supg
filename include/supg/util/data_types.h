@@ -24,15 +24,6 @@ enum struct message_type {
     proprietary
 };
 
-enum struct log_level {
-    panic = 0,
-    fatal = 1,
-    error = 2,
-    warning = 3,
-    info = 4,
-    debug = 5
-};
-
 struct network_server {
     std::string _host;
     uint16_t _port;

@@ -4,3 +4,6 @@
 [submodule "modules/date"]
 	path = modules/date
 	url = https://github.com/HowardHinnant/date
+[submodule "modules/spdlog"]
+	path = modules/spdlog
+	url = https://github.com/gabime/spdlog

@@ -5,6 +5,7 @@
 #include <supg/core/simulator.h>
 #include <supg/util/helper.h>
 #include <toml/toml.h>
+#include <spdlog/spdlog.h>
 #include <unistd.h>
 #include <iostream>
 
@@ -13,11 +14,11 @@ namespace supg {
 void simulator::init() {
     // Create socket file descriptor
     if ((_socket_fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-        std::cerr << "Failed to create socket file descriptor" << std::endl;
+        spdlog::critical("Failed to create socket file descriptor");
         exit(EXIT_FAILURE);
     }
 
-    // Read config file
+    // Parse config
     std::ifstream config_file("supg.toml");
     toml::ParseResult res = toml::parse(config_file);
     if (!res.valid()) {
@@ -44,12 +45,24 @@ void simulator::init() {
     }
 
     // Initialize log level
-    _config._log_level = log_level::info;
+    spdlog::set_level(spdlog::level::info);
     val = config.find("general.log_level");
     if (val && val->is<int>()) {
         auto log_level = val->as<int>();
-        if (log_level >= static_cast<int>(log_level::panic) && log_level <= static_cast<int>(log_level::debug)) {
-            _config._log_level = static_cast<enum log_level>(log_level);
+        if (log_level == 0) {
+            spdlog::set_level(spdlog::level::off);
+        } else if (log_level == 1) {
+            spdlog::set_level(spdlog::level::critical);
+        } else if (log_level == 2) {
+            spdlog::set_level(spdlog::level::err);
+        } else if (log_level == 3) {
+            spdlog::set_level(spdlog::level::warn);
+        } else if (log_level == 4) {
+            spdlog::set_level(spdlog::level::info);
+        } else if (log_level == 5) {
+            spdlog::set_level(spdlog::level::debug);
+        } else if (log_level == 6) {
+            spdlog::set_level(spdlog::level::trace);
         }
     }
 
@@ -114,6 +127,13 @@ void simulator::init() {
         }
         _gw_list.emplace_back(std::move(gw_mac), _config);
     }
+
+    // Log config
+    spdlog::debug("[Config] {:25}: {}:{}", "Network server", ns._host, ns._port);
+    spdlog::debug("[Config] {:25}: {}", "Network session key", _config._network_session_key);
+    spdlog::debug("[Config] {:25}: {}", "Application session key", _config._application_session_key);
+    spdlog::debug("[Config] {:25}: {}", "Device count", _config._dev_count);
+    spdlog::debug("[Config] {:25}: {}", "Gateway count", _config._gw_max_count);
 }
 
 void simulator::start() {

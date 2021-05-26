@@ -4,7 +4,7 @@
 
 #include <supg/core/gateway.h>
 #include <supg/util/helper.h>
-#include <iostream>
+#include <spdlog/spdlog.h>
 #include <algorithm>
 
 namespace supg {
@@ -26,16 +26,14 @@ void gateway::push_data(int sock_fd, const sockaddr_in& server_addr, payload&& p
 
     // Send packet
     sendto(sock_fd, packet.c_str(), packet.length(), MSG_CONFIRM, (const sockaddr*)&server_addr, sizeof(server_addr));
-    std::cout << "Gateway " << get_hex_string(_mac) << ": ";
-    std::cout << "Send packet #" << payload._f_cnt << " from device " << get_hex_string(payload._dev_addr) << std::endl;
+    spdlog::info("Gateway {}: Send packet #{} from device {}", hex_string(_mac), payload._f_cnt, hex_string(payload._dev_addr));
 
     // Receive ACK
-    size_t ack_len, addr_len;
-    char ack[ACK_MAX_LEN];
+    size_t ack_len = 0, addr_len = 0;
+    byte ack[ACK_MAX_LEN];
     ack_len = recvfrom(sock_fd, ack, ACK_MAX_LEN, MSG_WAITALL, (sockaddr*)&server_addr, (socklen_t*)&addr_len);
     ack[ack_len] = '\0';
-    std::cout << "Gateway " << get_hex_string(_mac) << ": ";
-    std::cout << "Receive ACK for packet #" << payload._f_cnt << " of device " << get_hex_string(payload._dev_addr) << std::endl;
+    spdlog::info("Gateway {}: Receive ACK for packet #{} from device {}", hex_string(_mac), payload._f_cnt, hex_string(payload._dev_addr));
 }
 
 rxpk gateway::generate_data(byte_array&& payload) const {

@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 14)
 
 include_directories(modules/tinytoml/include)
 include_directories(modules/date/include)
+include_directories(modules/spdlog/include)
 include_directories(include)
 
 set(SUPG_HEADERS

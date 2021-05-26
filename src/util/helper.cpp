@@ -23,14 +23,6 @@ byte get_random_byte() {
     return static_cast<byte>(res);
 }
 
-std::string get_hex_string(const std::vector<byte>& vec) {
-    std::stringstream ss;
-    for (const auto& ele : vec) {
-        ss << std::hex << std::setw(2) << std::setfill('0') << (int)ele;
-    }
-    return ss.str();
-}
-
 std::string get_current_timestamp() {
     auto now = std::chrono::system_clock::now();
     return date::format("%FT%TZ", date::floor<std::chrono::microseconds>(now));
@@ -84,6 +76,22 @@ std::string base64_decode(const std::string& in) {
         }
     }
     return out;
+}
+
+std::string hex_string(const std::vector<byte>& vec) {
+    std::stringstream ss;
+    for (const auto& ele : vec) {
+        ss << std::hex << std::setw(2) << std::setfill('0') << (int)ele;
+    }
+    return ss.str();
+}
+
+std::string hex_string(const byte* str, size_t len) {
+    std::stringstream ss;
+    for (size_t i = 0; i < len; ++i) {
+        ss << std::hex << std::setw(2) << std::setfill('0') << str[i];
+    }
+    return ss.str();
 }
 
 }
