@@ -3,6 +3,7 @@
 //
 
 #include <supg/util/helper.h>
+#include <supg/util/config.h>
 #include <date/date.h>
 #include <random>
 #include <sstream>
@@ -92,6 +93,21 @@ std::string hex_string(const byte* str, size_t len) {
         ss << std::hex << std::setw(2) << std::setfill('0') << str[i];
     }
     return ss.str();
+}
+
+ssize_t timeout_recvfrom(int fd, char* buf, ssize_t buf_len, const sockaddr_in& addr, int t_sec) {
+    fd_set fds;
+    timeval timeout{};
+    FD_ZERO(&fds);
+    FD_SET(fd, &fds);
+    timeout.tv_sec = t_sec;
+    auto res = select(fd + 1, &fds, nullptr, nullptr, &timeout);
+    if (res == -1 || res == 0) {
+        return -1;
+    } else {
+        size_t addr_len = 0;
+        return recvfrom(fd, buf, buf_len, MSG_WAITALL, (sockaddr*)&addr, (socklen_t*)&addr_len);
+    }
 }
 
 }

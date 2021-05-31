@@ -11,7 +11,11 @@ namespace supg {
 
 gateway::gateway(std::vector<byte> mac, const config& config) : _mac{std::move(mac)}, _config{config} {}
 
-void gateway::push_data(int sock_fd, const sockaddr_in& server_addr, payload&& payload) const {
+void gateway::push_data(int socket_fd, const sockaddr_in& server_addr, payload&& payload) const {
+    auto pk_id = payload._f_cnt;
+    auto&& gw_mac = hex_string(_mac);
+    auto&& dev_addr = hex_string(payload._dev_addr);
+
     // Create Semtech UDP packet
     auto&& data = generate_data(payload.as_byte_array());
     byte_array packet(GW_MAC_LEN + 4, 0);
@@ -25,15 +29,22 @@ void gateway::push_data(int sock_fd, const sockaddr_in& server_addr, payload&& p
     packet += data.as_byte_array();
 
     // Send packet
-    sendto(sock_fd, packet.c_str(), packet.length(), MSG_CONFIRM, (const sockaddr*)&server_addr, sizeof(server_addr));
-    spdlog::info("Gateway {}: Send packet #{} from device {}", hex_string(_mac), payload._f_cnt, hex_string(payload._dev_addr));
+    sendto(socket_fd, packet.c_str(), packet.length(), MSG_CONFIRM, (const sockaddr*)&server_addr, sizeof(server_addr));
+    spdlog::info("Gateway {}: Send packet #{} from device {}", gw_mac, pk_id, dev_addr);
 
     // Receive ACK
-    size_t ack_len = 0, addr_len = 0;
     byte ack[ACK_MAX_LEN];
-    ack_len = recvfrom(sock_fd, ack, ACK_MAX_LEN, MSG_WAITALL, (sockaddr*)&server_addr, (socklen_t*)&addr_len);
-    ack[ack_len] = '\0';
-    spdlog::info("Gateway {}: Receive ACK for packet #{} from device {}", hex_string(_mac), payload._f_cnt, hex_string(payload._dev_addr));
+    auto ack_len = timeout_recvfrom(socket_fd, ack, ACK_MAX_LEN, server_addr, 10);
+    if (ack_len < 0) {
+        spdlog::info("Gateway {}: Failed to receive ACK for packet #{} from device {}", gw_mac, pk_id, dev_addr);
+    } else {
+        ack[ack_len] = '\0';
+        if (ack_len == 4) {
+            spdlog::info("Gateway {}: Receive valid ACK for packet #{} from device {}", gw_mac, pk_id, dev_addr);
+        } else {
+            spdlog::info("Gateway {}: Receive invalid ACK for packet #{} from device {}", gw_mac, pk_id, dev_addr);
+        }
+    }
 }
 
 rxpk gateway::generate_data(byte_array&& payload) const {
