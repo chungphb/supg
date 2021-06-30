@@ -17,11 +17,10 @@ public:
     void stop();
 
 private:
-    int _socket_fd;
-    sockaddr_in _server_addr;
     config _config;
-    std::vector<device> _dev_list;
-    std::vector<gateway> _gw_list;
+    std::vector<std::shared_ptr<device>> _dev_list;
+    std::vector<std::shared_ptr<gateway>> _gw_list;
+    bool _stopped = false;
 };
 
 }

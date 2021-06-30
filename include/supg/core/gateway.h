@@ -15,15 +15,20 @@ namespace supg {
 
 struct gateway {
 public:
-    gateway(const std::string& mac, const config& config);
-    void push_data(int sock_fd, const sockaddr_in& server_addr, payload&& payload) const;
+    gateway(const std::string& id, const config& config);
+    void run();
+    void stop();
+    void push_data(const payload& payload) const;
 
 private:
     rxpk generate_data(byte_array&& payload) const;
 
 private:
-    std::array<byte, 8> _mac;
+    std::array<byte, 8> _id;
     const config& _config;
+    int _socket_fd;
+    sockaddr_in _server;
+    bool _stopped = false;
 };
 
 }

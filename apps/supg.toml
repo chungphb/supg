@@ -6,12 +6,13 @@ host = "localhost"
 port = 1700
 
 [simulator]
-network_session_key = "00000000000000000000000000000000"
-application_session_key = "00000000000000000000000000000000"
 
 [simulator.device]
-first = "00000000"
-count = 100
+first_eui = "0000000000000000"
+first_address = "00000000"
+first_network_session_key = "00000000000000000000000000000000"
+first_application_session_key = "00000000000000000000000000000000"
+count = 1
 f_port = 10
 payload = "test_packet_1234"
 frequency = 868100000
@@ -19,6 +20,6 @@ bandwidth = 125
 spreading_factor = 12
 
 [simulator.gateway]
-first = "0000000000000000"
-min_count = 3
-max_count = 5
+first_id = "0000000000000000"
+min_count = 1
+max_count = 1

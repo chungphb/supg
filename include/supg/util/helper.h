@@ -37,7 +37,7 @@ template <typename T>
 T from_hex_string_to(const std::string& str) {
     static_assert(std::is_integral<T>::value, "Integral required.");
     T res;
-    std::stringstream ss;
+    std::basic_stringstream<byte> ss;
     ss << std::hex << str;
     ss >> res;
     return res;
@@ -46,12 +46,13 @@ T from_hex_string_to(const std::string& str) {
 template <typename T>
 std::string to_hex_string(T val) {
     static_assert(std::is_integral<T>::value, "Integral required.");
-    std::stringstream ss;
+    std::basic_stringstream<byte> ss;
     ss << std::setfill('0') << std::setw(sizeof(T) * 2) << std::hex << val;
     return ss.str();
 }
 
 std::string to_hex_string(const byte* str, size_t len);
+std::string to_string(const network_server& addr);
 
 // Receive UDP packet with timeout
 ssize_t timeout_recvfrom(int fd, char* buf, ssize_t buf_len, const sockaddr_in& addr, int t_sec);

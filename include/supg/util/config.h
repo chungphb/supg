@@ -9,26 +9,25 @@
 
 namespace supg {
 
-constexpr size_t DEV_ADDR_LEN = 4;
-constexpr size_t GW_MAC_LEN = 8;
-constexpr size_t ACK_MAX_LEN = 1024;
 
-constexpr char NS_DEFAULT_HOST[] = "localhost";
-constexpr size_t NS_DEFAULT_PORT = 1700;
+constexpr char default_ns_host[] = "localhost";
+constexpr size_t default_ns_port = 1700;
 
 struct config {
-    std::string _nwk_s_key;
-    std::string _app_s_key;
-    std::string _first_dev;
-    int _dev_count = 100;
+    network_server _network_server{default_ns_host, default_ns_port};
+    std::string _first_dev_eui;
+    std::string _first_dev_addr;
+    std::string _first_dev_nwk_s_key;
+    std::string _first_dev_app_s_key;
+    int _dev_count = 1;
     int _f_port = 10;
     std::string _payload = "test_packet_1234";
     int _freq = 868100000;
     int _bandwidth = 125;
     int _s_factor = 12;
-    std::string _first_gw;
-    int _gw_min_count = 3;
-    int _gw_max_count = 5;
+    std::string _first_gw_id;
+    int _gw_min_count = 1;
+    int _gw_max_count = 1;
 };
 
 }

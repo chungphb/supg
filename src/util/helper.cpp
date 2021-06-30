@@ -73,7 +73,7 @@ std::string base64_decode(const std::string& in) {
 }
 
 std::string hex_string(const std::vector<byte>& vec) {
-    std::stringstream ss;
+    std::basic_stringstream<byte> ss;
     for (const auto& ele : vec) {
         ss << std::hex << std::setw(2) << std::setfill('0') << (int)ele;
     }
@@ -81,11 +81,15 @@ std::string hex_string(const std::vector<byte>& vec) {
 }
 
 std::string to_hex_string(const byte* str, size_t len) {
-    std::stringstream ss;
+    std::basic_stringstream<byte> ss;
     for (size_t i = 0; i < len; ++i) {
         ss << std::hex << std::setw(2) << std::setfill('0') << (int)static_cast<unsigned char>(str[i]);
     }
     return ss.str();
+}
+
+std::string to_string(const network_server& addr) {
+    return addr._host + ":" + std::to_string(addr._port);
 }
 
 ssize_t timeout_recvfrom(int fd, char* buf, ssize_t buf_len, const sockaddr_in& addr, int t_sec) {

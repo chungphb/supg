@@ -8,7 +8,7 @@
 namespace supg {
 
 byte_array rxpk::as_byte_array() const {
-    std::stringstream ss;
+    std::basic_stringstream<byte> ss;
     ss << R"({"rxpk":[{)";
     for (auto it = _fields.begin(); it != _fields.end();) {
         ss << R"(")" << it->first << R"(":)" << it->second;
@@ -20,13 +20,13 @@ byte_array rxpk::as_byte_array() const {
 }
 
 void rxpk::add(std::string field_name, const std::string& field_value) {
-    std::stringstream ss;
+    std::basic_stringstream<byte> ss;
     ss << R"(")" << field_value << R"(")";
     _fields.emplace_back(std::move(field_name), ss.str());
 }
 
 void rxpk::add(std::string field_name, const char* field_value) {
-    std::stringstream ss;
+    std::basic_stringstream<byte> ss;
     ss << R"(")" << field_value << R"(")";
     _fields.emplace_back(std::move(field_name), ss.str());
 }

@@ -7,15 +7,21 @@
 
 namespace supg {
 
-device::device(const std::string& addr, const config& config) : _config{config} {
-    for (int i = 0; i < _addr.size(); ++i) {
-        _addr[i] = static_cast<byte>(from_hex_string_to<uint32_t>(addr.substr(i << 1, 2)));
+device::device(const std::string& eui, const config& config) : _config{config} {
+    for (int i = 0; i < 8; ++i) {
+        _eui[i] = static_cast<byte>(from_hex_string_to<uint32_t>(eui.substr(i << 1, 2)));
     }
 }
 
-void device::send_payload(const gateway& gateway, int socket_fd, const sockaddr_in& server_addr) {
+void device::run() {
     auto&& payload = generate_payload(message_type::unconfirmed_data_up);
-    gateway.push_data(socket_fd, server_addr, std::move(payload));
+    for (const auto& gateway : _gateways) {
+        gateway->push_data(payload);
+    }
+}
+
+void device::stop() {
+    _stopped = true;
 }
 
 payload device::generate_payload(message_type m_type) {
