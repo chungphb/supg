@@ -13,7 +13,7 @@ namespace supg {
 struct simulator {
 public:
     void init();
-    void start();
+    void run();
     void stop();
 
 private:

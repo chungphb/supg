@@ -7,7 +7,6 @@
 #include <toml/toml.h>
 #include <spdlog/spdlog.h>
 #include <unistd.h>
-#include <iostream>
 
 namespace supg {
 
@@ -19,10 +18,10 @@ void simulator::init() {
     }
 
     // Parse config
-    std::ifstream config_file("supg.toml");
-    toml::ParseResult res = toml::parse(config_file);
+    std::ifstream ifs("supg.toml");
+    toml::ParseResult res = toml::parse(ifs);
     if (!res.valid()) {
-        throw std::runtime_error("Invalid config file");
+        throw std::runtime_error("Config: Invalid config file");
     }
     const toml::Value& config = res.value;
 
@@ -31,10 +30,16 @@ void simulator::init() {
     const toml::Value* val = config.find("network_server.host");
     if (val && val->is<std::string>()) {
         ns._host = val->as<std::string>();
+        if (ns._host.empty()) {
+            throw std::runtime_error("Config: Invalid host");
+        }
     }
     val = config.find("network_server.port");
     if (val && val->is<int>()) {
         ns._port = val->as<int>();
+        if (ns._port <= 0) {
+            throw std::runtime_error("Config: Invalid port");
+        }
     }
     _server_addr.sin_family = AF_INET;
     _server_addr.sin_port = htons(ns._port);
@@ -63,82 +68,128 @@ void simulator::init() {
             spdlog::set_level(spdlog::level::debug);
         } else if (log_level == 6) {
             spdlog::set_level(spdlog::level::trace);
+        } else {
+            throw std::runtime_error("Config: Invalid log level");
         }
     }
 
     // Initialize NwkSKey and AppSKey
     val = config.find("simulator.network_session_key");
     if (val && val->is<std::string>()) {
-        _config._network_session_key = val->as<std::string>();
+        _config._nwk_s_key = val->as<std::string>();
+        if (_config._nwk_s_key.size() != 32) {
+            throw std::runtime_error("Config: Invalid session key");
+        }
     }
     val = config.find("simulator.application_session_key");
     if (val && val->is<std::string>()) {
-        _config._application_session_key = val->as<std::string>();
+        _config._app_s_key = val->as<std::string>();
+        if (_config._app_s_key.size() != 32) {
+            throw std::runtime_error("Config: Invalid session key");
+        }
     }
 
     // Initialize device configs
+    val = config.find("simulator.device.first");
+    if (val && val->is<std::string>()) {
+        _config._first_dev = val->as<std::string>();
+        if (_config._first_dev.size() != 8) {
+            throw std::runtime_error("Config: Invalid device address");
+        }
+    }
     val = config.find("simulator.device.count");
     if (val && val->is<int>()) {
         _config._dev_count = val->as<int>();
+        if (_config._dev_count <= 0) {
+            throw std::runtime_error("Config: Invalid device count");
+        }
     }
     val = config.find("simulator.device.f_port");
     if (val && val->is<int>()) {
         _config._f_port = val->as<int>();
+        if (_config._f_port <= 0) {
+            throw std::runtime_error("Config: Invalid frame port");
+        }
     }
     val = config.find("simulator.device.payload");
     if (val && val->is<std::string>()) {
         _config._payload = val->as<std::string>();
+        if (_config._payload.empty()) {
+            throw std::runtime_error("Config: Invalid payload");
+        }
     }
     val = config.find("simulator.device.frequency");
     if (val && val->is<int>()) {
         _config._freq = val->as<int>();
+        if (_config._freq <= 0) {
+            throw std::runtime_error("Config: Invalid frequency");
+        }
+    }
+    val = config.find("simulator.device.bandwidth");
+    if (val && val->is<int>()) {
+        _config._bandwidth = val->as<int>();
+        if (_config._bandwidth <= 0) {
+            throw std::runtime_error("Config: Invalid bandwidth");
+        }
     }
     val = config.find("simulator.device.spreading_factor");
     if (val && val->is<int>()) {
         _config._s_factor = val->as<int>();
+        if (_config._s_factor <= 0) {
+            throw std::runtime_error("Config: Invalid spreading-factor");
+        }
     }
 
     // Initialize gateway configs
+    val = config.find("simulator.gateway.first");
+    if (val && val->is<std::string>()) {
+        _config._first_gw = val->as<std::string>();
+        if (_config._first_gw.size() != 16) {
+            throw std::runtime_error("Config: Invalid gateway ID");
+        }
+    }
     val = config.find("simulator.gateway.min_count");
     if (val && val->is<int>()) {
         _config._gw_min_count = val->as<int>();
+        if (_config._gw_min_count <= 0) {
+            throw std::runtime_error("Config: Invalid gateway min count");
+        }
     }
     val = config.find("simulator.gateway.max_count");
     if (val && val->is<int>()) {
         _config._gw_max_count = val->as<int>();
+        if (_config._gw_max_count < _config._gw_min_count) {
+            throw std::runtime_error("Config: Invalid gateway max count");
+        }
     }
 
+    std::stringstream ss;
+
     // Initialize device list
-    for (int i = 0; i < _config._dev_count; ++i) {
-        std::vector<byte> dev_addr;
-        dev_addr.reserve(DEV_ADDR_LEN);
-        for (int j = 0; j < DEV_ADDR_LEN; j++) {
-            dev_addr.push_back(get_random_byte());
-        }
-        _dev_list.emplace_back(std::move(dev_addr), _config);
+    auto dev_addr = from_hex_string_to<uint32_t>(_config._first_dev);
+    for (int i = 0; i < _config._dev_count; ++i, ++dev_addr) {
+        _dev_list.emplace_back(to_hex_string(dev_addr), _config);
     }
 
     // Initialize gateway list
-    for (int i = 0; i < _config._gw_max_count; ++i) {
-        std::vector<byte> gw_mac;
-        gw_mac.reserve(GW_MAC_LEN);
-        for (int j = 0; j < GW_MAC_LEN; j++) {
-            gw_mac.push_back(get_random_byte());
-        }
-        _gw_list.emplace_back(std::move(gw_mac), _config);
+    auto gateway_id = from_hex_string_to<uint64_t>(_config._first_gw);
+    for (int i = 0; i < _config._dev_count; ++i, ++gateway_id) {
+        _gw_list.emplace_back(to_hex_string(gateway_id), _config);
     }
 
     // Log config
-    spdlog::debug("[Config] {:25}: {}:{}", "Network server", ns._host, ns._port);
-    spdlog::debug("[Config] {:25}: {}", "Network session key", _config._network_session_key);
-    spdlog::debug("[Config] {:25}: {}", "Application session key", _config._application_session_key);
-    spdlog::debug("[Config] {:25}: {}", "Device count", _config._dev_count);
-    spdlog::debug("[Config] {:25}: {}", "Gateway count", _config._gw_max_count);
+    spdlog::debug("[Config] {:<25}:{:>35}", "Network server", ns._host + ":" + std::to_string(ns._port));
+    spdlog::debug("[Config] {:<25}:{:>35}", "Network session key", _config._nwk_s_key);
+    spdlog::debug("[Config] {:<25}:{:>35}", "Application session key", _config._app_s_key);
+    spdlog::debug("[Config] {:<25}:{:>35}", "Starting device", _config._first_dev);
+    spdlog::debug("[Config] {:<25}:{:>35}", "Device count", _config._dev_count);
+    spdlog::debug("[Config] {:<25}:{:>35}", "Starting gateway", _config._first_gw);
+    spdlog::debug("[Config] {:<25}:{:>35}", "Gateway count", _config._gw_max_count);
 }
 
-void simulator::start() {
+void simulator::run() {
     for (auto& dev : _dev_list) {
-        auto gw_id = get_random(0, _gw_list.size() - 1);
+        auto gw_id = get_random_number<size_t>(0, _gw_list.size() - 1);
         dev.send_payload(_gw_list[gw_id], _socket_fd, _server_addr);
     }
 }

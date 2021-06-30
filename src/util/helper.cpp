@@ -12,15 +12,8 @@
 
 namespace supg {
 
-size_t get_random(size_t min, size_t max) {
-    std::random_device rd;
-    std::mt19937 mt{rd()};
-    std::uniform_int_distribution<size_t> dist{min, max};
-    return dist(mt);
-}
-
-byte get_random_byte() {
-    size_t res = get_random(0, 127);
+byte get_random_byte(byte min, byte max) {
+    auto res = get_random_number<int>(min, max);
     return static_cast<byte>(res);
 }
 
@@ -29,9 +22,9 @@ std::string get_current_timestamp() {
     return date::format("%FT%TZ", date::floor<std::chrono::microseconds>(now));
 }
 
-size_t get_time() {
+size_t get_time_since_epoch() {
     auto now = std::chrono::system_clock::now();
-    return now.time_since_epoch().count();
+    return std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
 }
 
 const char* base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -87,10 +80,10 @@ std::string hex_string(const std::vector<byte>& vec) {
     return ss.str();
 }
 
-std::string hex_string(const byte* str, size_t len) {
+std::string to_hex_string(const byte* str, size_t len) {
     std::stringstream ss;
     for (size_t i = 0; i < len; ++i) {
-        ss << std::hex << std::setw(2) << std::setfill('0') << str[i];
+        ss << std::hex << std::setw(2) << std::setfill('0') << (int)static_cast<unsigned char>(str[i]);
     }
     return ss.str();
 }

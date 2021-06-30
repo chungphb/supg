@@ -10,12 +10,15 @@ network_session_key = "00000000000000000000000000000000"
 application_session_key = "00000000000000000000000000000000"
 
 [simulator.device]
-count = 1000
+first = "00000000"
+count = 100
 f_port = 10
 payload = "test_packet_1234"
 frequency = 868100000
+bandwidth = 125
 spreading_factor = 12
 
 [simulator.gateway]
+first = "0000000000000000"
 min_count = 3
 max_count = 5

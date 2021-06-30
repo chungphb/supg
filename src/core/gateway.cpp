@@ -9,12 +9,16 @@
 
 namespace supg {
 
-gateway::gateway(std::vector<byte> mac, const config& config) : _mac{std::move(mac)}, _config{config} {}
+gateway::gateway(const std::string& mac, const config& config) : _config{config} {
+    for (int i = 0; i < _mac.size(); ++i) {
+        _mac[i] = static_cast<byte>(from_hex_string_to<uint32_t>(mac.substr(i << 1, 2)));
+    }
+}
 
 void gateway::push_data(int socket_fd, const sockaddr_in& server_addr, payload&& payload) const {
     auto pk_id = payload._f_cnt;
-    auto&& gw_mac = hex_string(_mac);
-    auto&& dev_addr = hex_string(payload._dev_addr);
+    auto&& gw_mac = to_hex_string(_mac.data(), _mac.size());
+    auto&& dev_addr = to_hex_string(payload._dev_addr.data(), payload._dev_addr.size());
 
     // Create Semtech UDP packet
     auto&& data = generate_data(payload.as_byte_array());

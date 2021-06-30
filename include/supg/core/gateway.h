@@ -13,18 +13,16 @@
 
 namespace supg {
 
-char get_random_byte();
-
 struct gateway {
 public:
-    gateway(std::vector<byte> mac, const config& config);
+    gateway(const std::string& mac, const config& config);
     void push_data(int sock_fd, const sockaddr_in& server_addr, payload&& payload) const;
 
 private:
     rxpk generate_data(byte_array&& payload) const;
 
 private:
-    std::vector<byte> _mac;
+    std::array<byte, 8> _mac;
     const config& _config;
 };
 
