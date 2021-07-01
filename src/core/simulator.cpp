@@ -157,7 +157,31 @@ void simulator::init() {
     // Initialize gateway list
     auto gateway_id = from_hex_string_to<uint64_t>(_config._first_gw_id);
     for (int i = 0; i < _config._dev_count; ++i, ++gateway_id) {
-        auto gw = std::make_shared<gateway>(to_hex_string(gateway_id), _config);
+        auto gw = std::make_shared<gateway>();
+
+        // Set gateway ID
+        auto buf = to_hex_string(gateway_id);
+        for (int j = 0; j < 8; ++j) {
+            gw->_gateway_id._value[i] = static_cast<byte>(from_hex_string_to<uint32_t>(buf.substr(i << 1, 2)));
+        }
+
+        // Set network server
+        gw->_server.sin_family = AF_INET;
+        gw->_server.sin_port = htons(_config._network_server._port);
+        if (strcmp(_config._network_server._host.c_str(), default_ns_host) == 0) {
+            gw->_server.sin_addr.s_addr = INADDR_ANY;
+        } else {
+            inet_aton(_config._network_server._host.c_str(), &gw->_server.sin_addr);
+        }
+
+        // Set uplink RX info
+        gw->_uplink_rx_info._rssi = 50;
+        gw->_uplink_rx_info._lora_snr = 5.5;
+        gw->_uplink_rx_info._channel = 0;
+        gw->_uplink_rx_info._rf_chain = 0;
+        gw->_uplink_rx_info._crc_status = gw::crc_status::crc_ok;
+
+        // Add gateway
         _gw_list.emplace_back(gw);
     }
 
@@ -169,33 +193,43 @@ void simulator::init() {
     auto app_s_key_msb = from_hex_string_to<uint64_t>(_config._first_dev_nwk_s_key.substr(0, 16));
     auto app_s_key_lsb = from_hex_string_to<uint64_t>(_config._first_dev_app_s_key.substr(16, 16));
     for (int i = 0; i < _config._dev_count; ++i, ++dev_eui, ++dev_addr, ++nwk_s_key_lsb, ++app_s_key_lsb) {
-        auto dev = std::make_shared<device>(to_hex_string(dev_eui), _config);
+        auto dev = std::make_shared<device>();
+
+        // Set device EUI
+        auto buf = to_hex_string(dev_eui);
+        for (size_t j = 0; j < 8; ++j) {
+            dev->_dev_eui._value[j] = static_cast<byte>(from_hex_string_to<uint32_t>(buf.substr(j << 1, 2)));
+        }
 
         // Set device address
-        auto buf = to_hex_string(dev_addr);
+        buf = to_hex_string(dev_addr);
         for (size_t j = 0; j < 4; ++j) {
-            dev->_addr[j] = static_cast<byte>(from_hex_string_to<uint32_t>(buf.substr(j << 1, 2)));
+            dev->_dev_addr._value[j] = static_cast<byte>(from_hex_string_to<uint32_t>(buf.substr(j << 1, 2)));
         }
 
         // Set network session key
         buf = to_hex_string(nwk_s_key_msb);
         for (size_t j = 0; j < 8; ++j) {
-            dev->_nwk_s_key[j] = static_cast<byte>(from_hex_string_to<uint32_t>(buf.substr(j << 1, 2)));
+            dev->_nwk_s_key._value[j] = static_cast<byte>(from_hex_string_to<uint32_t>(buf.substr(j << 1, 2)));
         }
         buf = to_hex_string(nwk_s_key_lsb);
         for (size_t j = 8; j < 16; ++j) {
-            dev->_nwk_s_key[j] = static_cast<byte>(from_hex_string_to<uint32_t>(buf.substr((j - 8) << 1, 2)));
+            dev->_nwk_s_key._value[j] = static_cast<byte>(from_hex_string_to<uint32_t>(buf.substr((j - 8) << 1, 2)));
         }
 
         // Set application session key
         buf = to_hex_string(app_s_key_msb);
         for (size_t j = 0; j < 8; ++j) {
-            dev->_app_s_key[j] = static_cast<byte>(from_hex_string_to<uint32_t>(buf.substr(j << 1, 2)));
+            dev->_app_s_key._value[j] = static_cast<byte>(from_hex_string_to<uint32_t>(buf.substr(j << 1, 2)));
         }
         buf = to_hex_string(app_s_key_lsb);
         for (size_t j = 8; j < 16; ++j) {
-            dev->_app_s_key[j] = static_cast<byte>(from_hex_string_to<uint32_t>(buf.substr((j - 8) << 1, 2)));
+            dev->_app_s_key._value[j] = static_cast<byte>(from_hex_string_to<uint32_t>(buf.substr((j - 8) << 1, 2)));
         }
+
+        // Set payload
+        dev->_f_port = static_cast<uint8_t>(_config._f_port);
+        std::copy(_config._payload.begin(), _config._payload.end(), std::back_inserter(dev->_payload));
 
         // Set gateways
         auto gw_count = get_random_number(_config._gw_min_count, _config._gw_max_count);
@@ -211,6 +245,13 @@ void simulator::init() {
                 --j;
             }
         }
+
+        // Set uplink TX info
+        dev->_uplink_tx_info._frequency = _config._freq;
+        dev->_uplink_tx_info._modulation = gw::modulation::lora;
+        dev->_uplink_tx_info._lora_modulation_info._bandwidth = _config._bandwidth;
+        dev->_uplink_tx_info._lora_modulation_info._spreading_factor = _config._s_factor;
+        dev->_uplink_tx_info._lora_modulation_info._code_rate = "3/4";
 
         // Add device
         _dev_list.emplace_back(dev);

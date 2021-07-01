@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 14)
 include_directories(modules/tinytoml/include)
 include_directories(modules/date/include)
 include_directories(modules/spdlog/include)
+include_directories(modules/cryptopp)
 include_directories(include)
 
 set(supg_hdrs 
@@ -14,6 +15,7 @@ set(supg_hdrs
         include/supg/core/gateway.h
         include/supg/core/rxpk.h
         include/supg/core/payload.h
+        include/supg/core/frame.h
         include/supg/util/helper.h
         include/supg/util/config.h
         include/supg/util/helper.h)
@@ -29,7 +31,8 @@ add_executable(supg
         ${supg_hdrs}
         ${supg_srcs})
 target_link_libraries(supg
-        PUBLIC date::date)
+        PUBLIC date::date
+        PUBLIC cryptopp-shared)
 
 add_subdirectory(modules)
 

@@ -5,6 +5,7 @@
 #pragma once
 
 #include <supg/core/rxpk.h>
+#include <supg/core/frame.h>
 #include <supg/core/payload.h>
 #include <supg/util/config.h>
 #include <sys/socket.h>
@@ -13,21 +14,24 @@
 
 namespace supg {
 
+struct simulator;
+
 struct gateway {
 public:
-    gateway(const std::string& id, const config& config);
     void run();
     void stop();
-    void push_data(const payload& payload) const;
+    void send_uplink_frame(gw::uplink_frame frame);
+    friend struct simulator;
 
 private:
-    rxpk generate_data(byte_array&& payload) const;
+    std::vector<byte> generate_push_data_packet(const gw::uplink_frame& frame);
+    bool is_push_ack(const byte* resp, size_t resp_len, const std::vector<byte>& packet);
 
 private:
-    std::array<byte, 8> _id;
-    const config& _config;
+    lora::eui64 _gateway_id;
     int _socket_fd;
     sockaddr_in _server;
+    gw::uplink_rx_info _uplink_rx_info;
     bool _stopped = false;
 };
 

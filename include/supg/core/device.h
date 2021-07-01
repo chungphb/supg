@@ -13,22 +13,24 @@ struct simulator;
 
 struct device {
 public:
-    device(const std::string& eui, const config& config);
     void run();
     void stop();
     friend struct simulator;
 
 private:
-    payload generate_payload(message_type m_type);
+    void send_data();
+    void send_uplink(lora::phy_payload&& phy_payload);
 
 private:
-    std::array<byte, 8> _eui;
-    std::array<byte, 4> _addr;
-    std::array<byte, 16> _nwk_s_key;
-    std::array<byte, 16> _app_s_key;
-    const config& _config;
+    lora::eui64 _dev_eui;
+    lora::dev_addr _dev_addr;
+    lora::aes128key _nwk_s_key;
+    lora::aes128key _app_s_key;
     std::vector<std::shared_ptr<gateway>> _gateways;
-    int _frame_cnt = 0;
+    gw::uplink_tx_info _uplink_tx_info;
+    std::vector<byte> _payload;
+    uint8_t _f_port = 0;
+    int _f_cnt = 0;
     bool _stopped = false;
 };
 
