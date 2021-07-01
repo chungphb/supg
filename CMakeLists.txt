@@ -8,6 +8,8 @@ include_directories(modules/date/include)
 include_directories(modules/spdlog/include)
 include_directories(modules/cryptopp)
 include_directories(modules/json11)
+include_directories(modules/argagg/include)
+
 include_directories(include)
 
 set(supg_hdrs 

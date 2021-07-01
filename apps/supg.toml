@@ -14,11 +14,13 @@ first_address = "00000000"
 first_network_session_key = "00000000000000000000000000000000"
 first_application_session_key = "00000000000000000000000000000000"
 count = 1
+uplink_interval = 10
 f_port = 10
 payload = "test_packet_1234"
 frequency = 868100000
 bandwidth = 125
 spreading_factor = 12
+f_cnt = 0
 
 [simulator.gateway]
 first_id = "0000000000000000"

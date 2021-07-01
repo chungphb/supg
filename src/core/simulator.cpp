@@ -10,11 +10,55 @@
 
 namespace supg {
 
+void simulator::generate_config_file(const std::string& config_file) {
+    std::ofstream ofs;
+    ofs.open(config_file.c_str());
+
+    ofs << "[general]" << '\n';
+    ofs << "log_level = " << 4 << '\n';
+    ofs << '\n';
+
+    ofs << "[network_server]" << '\n';
+    ofs << "host = " << R"(")" << default_ns_host << R"(")" << '\n';
+    ofs << "port = " << default_ns_port << '\n';
+    ofs << '\n';
+
+    ofs << "[simulator]" << '\n';
+    ofs << "duration = " << _config._duration << '\n';
+    ofs << '\n';
+
+    ofs << "[simulator.device]" << '\n';
+    ofs << "first_eui = " << R"(")" << _config._first_dev_eui << R"(")" << '\n';
+    ofs << "first_address = " << R"(")" << _config._first_dev_addr << R"(")" << '\n';
+    ofs << "first_network_session_key = " << R"(")" << _config._first_dev_nwk_s_key << R"(")" << '\n';
+    ofs << "first_application_session_key = " << R"(")" << _config._first_dev_app_s_key << R"(")" << '\n';
+    ofs << "count = " << _config._dev_count << '\n';
+    ofs << "uplink_interval = " << _config._uplink_interval << '\n';
+    ofs << "f_port = " << _config._f_port << '\n';
+    ofs << "payload = " << R"(")" << _config._payload << R"(")" << '\n';
+    ofs << "frequency = " << _config._freq << '\n';
+    ofs << "bandwidth = " << _config._bandwidth << '\n';
+    ofs << "spreading_factor = " << _config._s_factor << '\n';
+    ofs << "f_cnt = " << _config._f_cnt << '\n';
+    ofs << '\n';
+
+    ofs << "[simulator.gateway]" << '\n';
+    ofs << "first_id = " << R"(")" << _config._first_gw_id << R"(")" << '\n';
+    ofs << "min_count = " << _config._gw_min_count << '\n';
+    ofs << "max_count = " << _config._gw_max_count << '\n';
+
+    ofs.close();
+}
+
+void simulator::set_config_file(const std::string& config_file) {
+    _config_file = config_file;
+}
+
 void simulator::init() {
     spdlog::info("[CONFIG]");
 
     // Parse config
-    std::ifstream ifs("supg.toml");
+    std::ifstream ifs(_config_file);
     toml::ParseResult res = toml::parse(ifs);
     if (!res.valid()) {
         throw std::runtime_error("Config: Invalid config file");
@@ -100,8 +144,15 @@ void simulator::init() {
     val = config.find("simulator.device.count");
     if (val && val->is<int>()) {
         _config._dev_count = val->as<int>();
-        if (_config._dev_count <= 0) {
+        if (_config._dev_count <= 0 || _config._dev_count > 1000) {
             throw std::runtime_error("Config: Invalid device count");
+        }
+    }
+    val = config.find("simulator.device.uplink_interval");
+    if (val && val->is<int>()) {
+        _config._uplink_interval = val->as<int>();
+        if (_config._uplink_interval <= 0) {
+            throw std::runtime_error("Config: Invalid uplink interval");
         }
     }
     val = config.find("simulator.device.f_port");
@@ -139,6 +190,13 @@ void simulator::init() {
             throw std::runtime_error("Config: Invalid spreading-factor");
         }
     }
+    val = config.find("simulator.device.f_cnt");
+    if (val && val->is<int>()) {
+        _config._f_cnt = val->as<int>();
+        if (_config._f_cnt <= 0) {
+            throw std::runtime_error("Config: Invalid frame counter");
+        }
+    }
 
     // Initialize gateway configs
     val = config.find("simulator.gateway.first_id");
@@ -165,13 +223,13 @@ void simulator::init() {
 
     // Initialize gateway list
     auto gateway_id = from_hex_string_to<uint64_t>(_config._first_gw_id);
-    for (int i = 0; i < _config._dev_count; ++i, ++gateway_id) {
+    for (int i = 0; i < _config._gw_max_count; ++i, ++gateway_id) {
         auto gw = std::make_shared<gateway>();
 
         // Set gateway ID
         auto buf = to_hex_string(gateway_id);
         for (int j = 0; j < 8; ++j) {
-            gw->_gateway_id._value[i] = static_cast<byte>(from_hex_string_to<uint32_t>(buf.substr(i << 1, 2)));
+            gw->_gateway_id._value[j] = static_cast<byte>(from_hex_string_to<uint32_t>(buf.substr(j << 1, 2)));
         }
 
         // Set network server
@@ -206,33 +264,33 @@ void simulator::init() {
 
         // Set device EUI
         auto buf = to_hex_string(dev_eui);
-        for (size_t j = 0; j < 8; ++j) {
+        for (int j = 0; j < 8; ++j) {
             dev->_dev_eui._value[j] = static_cast<byte>(from_hex_string_to<uint32_t>(buf.substr(j << 1, 2)));
         }
 
         // Set device address
         buf = to_hex_string(dev_addr);
-        for (size_t j = 0; j < 4; ++j) {
+        for (int j = 0; j < 4; ++j) {
             dev->_dev_addr._value[j] = static_cast<byte>(from_hex_string_to<uint32_t>(buf.substr(j << 1, 2)));
         }
 
         // Set network session key
         buf = to_hex_string(nwk_s_key_msb);
-        for (size_t j = 0; j < 8; ++j) {
+        for (int j = 0; j < 8; ++j) {
             dev->_nwk_s_key._value[j] = static_cast<byte>(from_hex_string_to<uint32_t>(buf.substr(j << 1, 2)));
         }
         buf = to_hex_string(nwk_s_key_lsb);
-        for (size_t j = 8; j < 16; ++j) {
+        for (int j = 8; j < 16; ++j) {
             dev->_nwk_s_key._value[j] = static_cast<byte>(from_hex_string_to<uint32_t>(buf.substr((j - 8) << 1, 2)));
         }
 
         // Set application session key
         buf = to_hex_string(app_s_key_msb);
-        for (size_t j = 0; j < 8; ++j) {
+        for (int j = 0; j < 8; ++j) {
             dev->_app_s_key._value[j] = static_cast<byte>(from_hex_string_to<uint32_t>(buf.substr(j << 1, 2)));
         }
         buf = to_hex_string(app_s_key_lsb);
-        for (size_t j = 8; j < 16; ++j) {
+        for (int j = 8; j < 16; ++j) {
             dev->_app_s_key._value[j] = static_cast<byte>(from_hex_string_to<uint32_t>(buf.substr((j - 8) << 1, 2)));
         }
 
@@ -268,11 +326,14 @@ void simulator::init() {
         dev->_uplink_tx_info._lora_modulation_info._spreading_factor = _config._s_factor;
         dev->_uplink_tx_info._lora_modulation_info._code_rate = "3/4";
 
+        // Set frame counter
+        dev->_f_cnt_up = _config._f_cnt;
+
         // Add device
         _dev_list.emplace_back(dev);
     }
 
-    // Log config
+    // Log configs
     spdlog::debug("{:<20}:{:>20}", "Network server", to_string(_config._network_server));
     spdlog::debug("{:<20}:{:>20}", "First device", _config._first_dev_eui);
     spdlog::debug("{:<20}:{:>20}", "Device count", _config._dev_count);
