@@ -9,7 +9,6 @@
 
 namespace supg {
 
-
 constexpr char default_ns_host[] = "localhost";
 constexpr size_t default_ns_port = 1700;
 
@@ -19,7 +18,9 @@ struct config {
     std::string _first_dev_addr;
     std::string _first_dev_nwk_s_key;
     std::string _first_dev_app_s_key;
+    int _duration = 60;
     int _dev_count = 1;
+    int _uplink_interval = 10;
     int _f_port = 10;
     std::string _payload = "test_packet_1234";
     int _freq = 868100000;

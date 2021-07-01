@@ -6,7 +6,7 @@
 
 #include <supg/core/device.h>
 #include <supg/core/gateway.h>
-#include <supg/util/config.h>
+#include <supg/core/config.h>
 
 namespace supg {
 
@@ -15,6 +15,9 @@ public:
     void init();
     void run();
     void stop();
+
+private:
+    bool is_running();
 
 private:
     config _config;

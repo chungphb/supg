@@ -6,6 +6,7 @@ host = "localhost"
 port = 1700
 
 [simulator]
+duration = 60
 
 [simulator.device]
 first_eui = "0000000000000000"

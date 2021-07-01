@@ -3,7 +3,7 @@
 //
 
 #include <supg/util/helper.h>
-#include <supg/util/config.h>
+#include <supg/core/config.h>
 #include <date/date.h>
 #include <random>
 #include <sstream>

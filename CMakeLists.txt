@@ -7,6 +7,7 @@ include_directories(modules/tinytoml/include)
 include_directories(modules/date/include)
 include_directories(modules/spdlog/include)
 include_directories(modules/cryptopp)
+include_directories(modules/json11)
 include_directories(include)
 
 set(supg_hdrs 
@@ -16,9 +17,10 @@ set(supg_hdrs
         include/supg/core/rxpk.h
         include/supg/core/payload.h
         include/supg/core/frame.h
+        include/supg/core/config.h
         include/supg/util/helper.h
-        include/supg/util/config.h
-        include/supg/util/helper.h)
+        include/supg/util/channel.h
+        include/supg/util/data_types.h)
 set(supg_srcs
         src/core/simulator.cpp
         src/core/device.cpp
@@ -32,7 +34,8 @@ add_executable(supg
         ${supg_srcs})
 target_link_libraries(supg
         PUBLIC date::date
-        PUBLIC cryptopp-shared)
+        PUBLIC cryptopp-shared
+        PUBLIC json11)
 
 add_subdirectory(modules)
 

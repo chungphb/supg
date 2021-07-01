@@ -11,6 +11,8 @@
 namespace supg {
 
 void simulator::init() {
+    spdlog::info("[CONFIG]");
+
     // Parse config
     std::ifstream ifs("supg.toml");
     toml::ParseResult res = toml::parse(ifs);
@@ -56,6 +58,13 @@ void simulator::init() {
             spdlog::set_level(spdlog::level::trace);
         } else {
             throw std::runtime_error("Config: Invalid log level");
+        }
+    }
+    val = config.find("simulator.duration");
+    if (val && val->is<int>()) {
+        _config._duration = val->as<int>();
+        if (_config._duration <= 0) {
+            throw std::invalid_argument("Config: Invalid duration");
         }
     }
 
@@ -227,9 +236,15 @@ void simulator::init() {
             dev->_app_s_key._value[j] = static_cast<byte>(from_hex_string_to<uint32_t>(buf.substr((j - 8) << 1, 2)));
         }
 
+        // Set uplink interval
+        dev->_uplink_interval = _config._uplink_interval;
+
         // Set payload
         dev->_f_port = static_cast<uint8_t>(_config._f_port);
         std::copy(_config._payload.begin(), _config._payload.end(), std::back_inserter(dev->_payload));
+
+        // Set downlink payload
+        dev->_downlink_frames = std::make_shared<channel<gw::downlink_frame>>();
 
         // Set gateways
         auto gw_count = get_random_number(_config._gw_min_count, _config._gw_max_count);
@@ -240,7 +255,7 @@ void simulator::init() {
                 return rand_id == gw_id;
             });
             if (gw_it == gw_list.end()) {
-                dev->_gateways.push_back(_gw_list[rand_id]);
+                dev->add_gateway(_gw_list[rand_id]);
             } else {
                 --j;
             }
@@ -258,17 +273,15 @@ void simulator::init() {
     }
 
     // Log config
-    spdlog::debug("[Config] {:<25}:{:>35}", "Network server", to_string(_config._network_server));
-    spdlog::debug("[Config] {:<25}:{:>35}", "First device", _config._first_dev_eui);
-    spdlog::debug("[Config] {:<25}:{:>35}", "Device count", _config._dev_count);
-    spdlog::debug("[Config] {:<25}:{:>35}", "First gateway", _config._first_gw_id);
-    spdlog::debug("[Config] {:<25}:{:>35}", "Gateway count", _config._gw_max_count);
+    spdlog::debug("{:<20}:{:>20}", "Network server", to_string(_config._network_server));
+    spdlog::debug("{:<20}:{:>20}", "First device", _config._first_dev_eui);
+    spdlog::debug("{:<20}:{:>20}", "Device count", _config._dev_count);
+    spdlog::debug("{:<20}:{:>20}", "First gateway", _config._first_gw_id);
+    spdlog::debug("{:<20}:{:>20}", "Gateway count", _config._gw_max_count);
 }
 
 void simulator::run() {
-    if (_stopped) {
-        return;
-    }
+    spdlog::info("[RUN]");
 
     // Run gateways
     for (const auto& gw : _gw_list) {
@@ -279,14 +292,27 @@ void simulator::run() {
     for (const auto& dev : _dev_list) {
         dev->run();
     }
+
+    // Wait to stop
+    std::this_thread::sleep_for(std::chrono::seconds(_config._duration));
+    stop();
 }
 
 void simulator::stop() {
-    if (_stopped) {
+    if (!is_running()) {
         return;
     }
 
+    spdlog::info("[STOP]");
+
+    // Prepare to stop
     _stopped = true;
+    for (const auto& dev : _dev_list) {
+        dev->_stopped = true;
+    }
+    for (const auto& gw : _gw_list) {
+        gw->_stopped = true;
+    }
 
     // Stop devices
     for (const auto& dev : _dev_list) {
@@ -297,6 +323,10 @@ void simulator::stop() {
     for (const auto& gw : _gw_list) {
         gw->stop();
     }
+}
+
+bool simulator::is_running() {
+    return !_dev_list.empty() && !_gw_list.empty() && !_stopped;
 }
 
 }

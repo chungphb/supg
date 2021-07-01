@@ -85,5 +85,63 @@ struct uplink_frame {
     uplink_rx_info _rx_info;
 };
 
+// Downlink TX info
+
+struct downlink_tx_info {
+    std::vector<byte> _gateway_id;
+    uint32_t _frequency;
+    int32_t _power;
+    modulation _modulation = modulation::lora;
+    lora_modulation_info _lora_modulation_info;
+    fsk_modulation_info _fsk_modulation_info;
+    uint32_t _board = 0;
+    uint32_t _antenna = 0;
+    std::vector<byte> _context;
+};
+
+// Downlink frame
+
+struct downlink_frame_item {
+    std::vector<byte> _phy_payload;
+    downlink_tx_info _tx_info;
+};
+
+struct downlink_frame {
+    std::vector<byte> _phy_payload;
+    downlink_tx_info _tx_info;
+    uint32_t _token;
+    std::vector<byte> _downlink_id;
+    std::vector<downlink_frame_item> _items;
+    std::vector<byte> _gateway_id;
+};
+
+// Downlink TX ACK
+
+enum struct tx_ack_status {
+    ignored = 0,
+    ok = 1,
+    too_late = 2,
+    too_early = 3,
+    collision_packet = 4,
+    collision_beacon = 5,
+    tx_freq = 6,
+    tx_power = 7,
+    gps_unlocked = 8,
+    queue_full = 9,
+    internal_error = 10
+};
+
+struct downlink_tx_ack_item {
+    tx_ack_status _status = tx_ack_status::ok;
+};
+
+struct downlink_tx_ack {
+    std::vector<byte> _gateway_id;
+    uint32_t _token = 0;
+    std::string _error;
+    std::vector<byte> _downlink_id;
+    std::vector<downlink_tx_ack_item> _items;
+};
+
 }
 }
