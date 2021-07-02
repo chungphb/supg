@@ -3,6 +3,7 @@
 //
 
 #include <supg/core/simulator.h>
+#include <supg/util/helper.h>
 #include <argagg/argagg.hpp>
 #include <csignal>
 #include <csetjmp>
@@ -39,7 +40,9 @@ int main(int argc, char** argv) {
         {"version", {"-v", "--version"}, "Show version info and exit.", 0},
         {"help", {"-h", "--help"}, "Show this text and exit.", 0},
         {"generate-config-file", {"-g", "--generate-config-file"}, "Generate a new configuration file and exit.", 1},
-        {"config", {"-c", "--config"}, "Specify configuration file.", 1}
+        {"config", {"-c", "--config"}, "Specify configuration file.", 1},
+        {"base64-encode", {"--base64-encode"}, "Encode string to Base64 format and exit.", 1},
+        {"base64-decode", {"--base64-decode"}, "Decode string from Base64 format and exit.", 1}
     }};
     argagg::parser_results options;
     try {
@@ -54,7 +57,15 @@ int main(int argc, char** argv) {
         return EXIT_SUCCESS;
     }
     if (options["version"]) {
-        std::cerr << "SUPG " << version << '\n';
+        std::cerr << "Semtech UDP Packet Generator " << version << '\n';
+        return EXIT_SUCCESS;
+    }
+    if (options["base64-encode"]) {
+        std::cout << supg::base64_encode(options["base64-encode"].as<std::string>()) << '\n';
+        return EXIT_SUCCESS;
+    }
+    if (options["base64-decode"]) {
+        std::cout << supg::base64_decode(options["base64-decode"].as<std::string>()) << '\n';
         return EXIT_SUCCESS;
     }
 

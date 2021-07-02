@@ -193,7 +193,7 @@ void simulator::init() {
     val = config.find("simulator.device.f_cnt");
     if (val && val->is<int>()) {
         _config._f_cnt = val->as<int>();
-        if (_config._f_cnt <= 0) {
+        if (_config._f_cnt < 0) {
             throw std::runtime_error("Config: Invalid frame counter");
         }
     }
